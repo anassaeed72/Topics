@@ -12,6 +12,7 @@ import sys
 from stem import CircStatus
 from stem.control import Controller
 import itertools
+from geoip import geolite2
 
 
 # url fileName Count
@@ -92,6 +93,9 @@ with stem.control.Controller.from_port() as controller:
     try:
       time_taken = scan(controller, [oneRelay.fingerprint,middleRelay.fingerprint, exitRelay.fingerprint])
       print "After time"
+      matchOneRelay = geolite2.lookup(oneRelay.address)
+      matchMiddleRelay = geolite2.lookup(middleRelay.address)
+      matchExitRelay = geolite2.lookup(exitRelay.address)
       with open(sys.argv[2], 'a') as f:
         f.write(",")
         f.write(oneRelay.address)
@@ -103,6 +107,30 @@ with stem.control.Controller.from_port() as controller:
         f.write(str(time_taken))
         f.write(",")
         f.write(str(count))
+        f.write(",")
+        f.write(matchOneRelay.country)
+        f.write(",")
+        f.write(matchOneRelay.continent)
+        f.write(",")
+        f.write(matchOneRelay.timezone)
+        f.write(",")
+        f.write(str(matchOneRelay.subdivisions))
+        f.write(",")
+        f.write(matchMiddleRelay.country)
+        f.write(",")
+        f.write(matchMiddleRelay.continent)
+        f.write(",")
+        f.write(matchMiddleRelay.timezone)
+        f.write(",")
+        f.write(str(matchMiddleRelay.subdivisions))
+        f.write(",")
+        f.write(matchExitRelay.country)
+        f.write(",")
+        f.write(matchExitRelay.continent)
+        f.write(",")
+        f.write(matchExitRelay.timezone)
+        f.write(",")
+        f.write(str(matchExitRelay.subdivisions))
         
       print('%s => %0.2f seconds' % (oneRelay.fingerprint, time_taken))
     except Exception as exc:
