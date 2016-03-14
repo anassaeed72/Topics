@@ -15,7 +15,7 @@ from stem.control import Controller
 import itertools
 from geoip import geolite2
 from geopy.geocoders import Nominatim
-
+from geopy.distance import vincenty
 
 # url fileName Count
 
@@ -101,7 +101,9 @@ with stem.control.Controller.from_port() as controller:
   relay_information = controller.get_network_statuses()
   # print relay_fingerprints
   count = int(sys.argv[3])
+
   for oneRelay in relay_information:
+    distanceBetweenRelays=0
     count = count +1
     if count >int(sys.argv[4]):
       sys.exit(1)
@@ -128,6 +130,7 @@ with stem.control.Controller.from_port() as controller:
         f.write(str(count))
         f.write(",")
         f.write(matchOneRelay.country)
+
         f.write(",")
         f.write(matchOneRelay.continent)
         f.write(",")
@@ -135,12 +138,14 @@ with stem.control.Controller.from_port() as controller:
         f.write(",")
         f.write(str(matchOneRelay.subdivisions))
         f.write(",")
-        location = geolocator.geocode(matchOneRelay.country)
-        f.write(str(location.latitude))
+        locationOneRelay = geolocator.geocode(matchOneRelay.country)
+        f.write(str(locationOneRelay.latitude))
         f.write(",")
-        f.write(str(location.longitude))
+        f.write(str(locationOneRelay.longitude))
+        oneRelayTuple = (locationOneRelay.latitude, locationOneRelay.longitude)
         f.write(",")
         f.write(matchMiddleRelay.country)
+
         f.write(",")
         f.write(matchMiddleRelay.continent)
         f.write(",")
@@ -148,10 +153,13 @@ with stem.control.Controller.from_port() as controller:
         f.write(",")
         f.write(str(matchMiddleRelay.subdivisions))
         f.write(",")
-        location = geolocator.geocode(matchMiddleRelay.country)
-        f.write(str(location.latitude))
+        locationMiddleRelay = geolocator.geocode(matchMiddleRelay.country)
+        f.write(str(locationMiddleRelay.latitude))
         f.write(",")
-        f.write(str(location.longitude))
+        f.write(str(locationMiddleRelay.longitude))
+        middleRelayTuple = (locationMiddleRelay.latitude, locationMiddleRelay.longitude)
+        distance = distance + vincenty(locationOneRelay, locationMiddleRelay).miles
+
         f.write(",")
         f.write(matchExitRelay.country)
         f.write(",")
@@ -161,10 +169,12 @@ with stem.control.Controller.from_port() as controller:
         f.write(",")
         f.write(str(matchExitRelay.subdivisions))
         f.write(",")
-        location = geolocator.geocode(matchExitRelay.country)
-        f.write(str(location.latitude))
+        locationExitRelay = geolocator.geocode(matchExitRelay.country)
+        f.write(str(locationExitRelay.latitude))
         f.write(",")
-        f.write(str(location.longitude))
+        f.write(str(locationExitRelay.longitude))
+        exitReplayTuple = (locationExitRelay.latitude, locationExitRelay.longitude)
+        distance = distance + vincenty(locationMiddleRelay, exitReplayTuple).miles
         f.write(",")
         f.write(sockProxyIp)
         f.write(",")
