@@ -31,6 +31,7 @@ CONNECTION_TIMEOUT = 10000  # timeout before we give up on a circuit
 # sockProxyIp = '103.246.87.147'
 sockProxyIp='127.0.0.1'
 sockProxyPort = 9050
+machineIp = ""
 def query(url):
   """
   Uses pycurl to fetch a site using the proxy on the SOCKS_PORT.
@@ -55,6 +56,7 @@ def query(url):
   try:
     print "check 9"
     curl.perform()
+    machineIp = curl.getinfo(pycurl.PRIMARY_IP)
     print "check 10"
     return output.getvalue()
   except pycurl.error as exc:
@@ -69,10 +71,7 @@ def scan(controller, path):
     f.write("\n")
     mystring = ",".join(str(x) for x in path)
     f.write(mystring)
-  """
-  Fetch check.torproject.org through the given path of relays, providing back
-  the time it took.
-  """
+
   print "Circuit Construction Started"
   circuit_id = controller.new_circuit(path, await_build = True)
   print "Circuit Construction Done"
@@ -83,23 +82,29 @@ def scan(controller, path):
     print "Query for Page Started"
     check_page = query(sys.argv[1])
     print "Query for Page Done"
-    # if 'Congratulations. This browser is configured to use Tor.' not in check_page:
-      # raise ValueError("Request didn't have the right content")
-
+  
     return time.time() - start_time
   finally:
     # controller.remove_event_listener(attach_stream)
     controller.reset_conf('__LeaveStreamsUnattached')
+
+def getTupleFromCountry(country):
+  locationFunction = geolocator.geocode(country)
+  functionTuple = (locationFunction.latitude,locationFunction.longitude)
+  return functionTuple
+
+def calculateDistanceBetweenLocs(intialDistance, locationIntial, locationFinal):
+  finalDistance = intialDistance + vincenty(locationIntial, locationFinal).miles
+  return finalDistance
+
+
 
 
 with stem.control.Controller.from_port() as controller:
   controller.authenticate()
   geolocator = Nominatim()
   matchSockProxy = geolite2.lookup(sockProxyIp)
-  # locationSockProxy = geolocator.geocode(matchSockProxy.country)
-  # relay_fingerprints = [desc.fingerprint for desc in controller.get_network_statuses()]
   relay_information = controller.get_network_statuses()
-  # print relay_fingerprints
   count = int(sys.argv[3])
 
   for oneRelay in relay_information:
@@ -109,15 +114,16 @@ with stem.control.Controller.from_port() as controller:
       sys.exit(1)
     middleRelay= next(itertools.islice(relay_information, count, count + 1))
     exitRelay= next(itertools.islice(relay_information, count+1, count + 2))
-	# location = geolocator.geocode("Lahore")
-	# print((location.latitude, location.longitude))
     try:
       time_taken = scan(controller, [oneRelay.fingerprint,middleRelay.fingerprint, exitRelay.fingerprint])
       print "After time"
       matchOneRelay = geolite2.lookup(oneRelay.address)
       matchMiddleRelay = geolite2.lookup(middleRelay.address)
       matchExitRelay = geolite2.lookup(exitRelay.address)
+      matchMachine = geolite2.lookup(machineIp)
+      machineTuple = getTupleFromCountry(matchMachine.country)
       with open(sys.argv[2], 'a') as f:
+       
         f.write(",")
         f.write(oneRelay.address)
         f.write(",")
@@ -130,7 +136,6 @@ with stem.control.Controller.from_port() as controller:
         f.write(str(count))
         f.write(",")
         f.write(matchOneRelay.country)
-
         f.write(",")
         f.write(matchOneRelay.continent)
         f.write(",")
@@ -138,11 +143,18 @@ with stem.control.Controller.from_port() as controller:
         f.write(",")
         f.write(str(matchOneRelay.subdivisions))
         f.write(",")
+        
+
         locationOneRelay = geolocator.geocode(matchOneRelay.country)
         f.write(str(locationOneRelay.latitude))
         f.write(",")
         f.write(str(locationOneRelay.longitude))
-        oneRelayTuple = (locationOneRelay.latitude, locationOneRelay.longitude)
+        oneRelayTuple = getTupleFromCountry(matchOneRelay.country)
+
+
+        distanceBetweenRelays = calculateDistanceBetweenLocs(distanceBetweenRelays,locationOneRelay,locationMachine)
+        f.write(",")
+        f.write(str(distanceBetweenRelays))
         f.write(",")
         f.write(matchMiddleRelay.country)
 
@@ -157,9 +169,10 @@ with stem.control.Controller.from_port() as controller:
         f.write(str(locationMiddleRelay.latitude))
         f.write(",")
         f.write(str(locationMiddleRelay.longitude))
-        middleRelayTuple = (locationMiddleRelay.latitude, locationMiddleRelay.longitude)
-        distance = distance + vincenty(locationOneRelay, locationMiddleRelay).miles
-
+        middleRelayTuple = getTupleFromCountry(matchMiddleRelay.country)
+        distanceBetweenRelays = calculateDistanceBetweenLocs(distanceBetweenRelays,locationOneRelay,locationMiddleRelay)
+        f.write(",")
+        f.write(str(distanceBetweenRelays))
         f.write(",")
         f.write(matchExitRelay.country)
         f.write(",")
@@ -173,9 +186,14 @@ with stem.control.Controller.from_port() as controller:
         f.write(str(locationExitRelay.latitude))
         f.write(",")
         f.write(str(locationExitRelay.longitude))
-        exitReplayTuple = (locationExitRelay.latitude, locationExitRelay.longitude)
-        distance = distance + vincenty(locationMiddleRelay, exitReplayTuple).miles
+        
+        exitReplayTuple = getTupleFromCountry(matchExitRelay.country)
+        distanceBetweenRelays = distanceBetweenRelays + vincenty(locationMiddleRelay, exitReplayTuple).miles
+        
         f.write(",")
+        f.write(str(distanceBetweenRelays))
+        f.write(",")
+       
         f.write(sockProxyIp)
         f.write(",")
         f.write(str(sockProxyPort))
