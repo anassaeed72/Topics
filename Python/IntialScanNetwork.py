@@ -27,7 +27,7 @@ from geopy.distance import vincenty
 # EXIT_FINGERPRINT = '379FB450010D17078B3766C2273303C358C3A442'
 
 SOCKS_PORT = 9050
-CONNECTION_TIMEOUT = 10000  # timeout before we give up on a circuit
+CONNECTION_TIMEOUT = 3000  # timeout before we give up on a circuit
 # sockProxyIp = '103.246.87.147'
 sockProxyIp='127.0.0.1'
 sockProxyPort = 9050
@@ -46,7 +46,7 @@ def query(url):
   print "check 4"
   curl.setopt( pycurl.PROXYPORT, sockProxyPort )
   print "check 5"
-  curl.setopt( pycurl.PROXYTYPE, pycurl.PROXYTYPE_SOCKS5_HOSTNAME )
+  curl.setopt( pycurl.PROXYTYPE, pycurl.PROXYTYPE_SOCKS5_HOSTNAME)
   print "check 6"
   curl.setopt(pycurl.CONNECTTIMEOUT, CONNECTION_TIMEOUT)
   print "check 7"
@@ -56,11 +56,12 @@ def query(url):
   try:
     print "check 9"
     curl.perform()
-    machineIp = curl.getinfo(pycurl.PRIMARY_IP)
     print "check 10"
+    machineIp = curl.getinfo(pycurl.PRIMARY_IP)
+    print "check 11"
     return output.getvalue()
   except pycurl.error as exc:
-    print "check 11"
+    print "check 12"
     raise ValueError("Unable to reach %s (%s)" % (url, exc))
 
 
@@ -96,12 +97,36 @@ def getTupleFromCountry(country):
 def calculateDistanceBetweenLocs(intialDistance, locationIntial, locationFinal):
   finalDistance = intialDistance + vincenty(locationIntial, locationFinal).miles
   return finalDistance
-
-
+def writeGeoInfoToFile(geoInformation,fileObject):
+  fileObject.write(geoInformation.country)
+  fileObject.write(",")
+  fileObject.write(geoInformation.continent)
+  fileObject.write(",")
+  fileObject.write(geoInformation.timezone)
+  fileObject.write(",")
+  fileObject.write(str(geoInformation.subdivisions))
+  fileObject.write(",")
+def writeCoordinatesToFile(coordinates,fileObject):
+  fileObject.write(str(coordinates.latitude))
+  fileObject.write(",")
+  fileObject.write(str(coordinates.longitude))
+def writeRelayInformation(relayObject,fileObject,otherLocatoin):
+  writeGeoInfoToFile(relayObject,fileObject)
+  locationOfRelay = geolocator.geocode(relayObject.country)    
+  writeCoordinatesToFile(locationOfRelay,fileObject)
+  relayTuple = getTupleFromCountry(relayObject.country)
+  distanceBetweenRelays = calculateDistanceBetweenLocs(distanceBetweenRelays,locationOfRelay,otherLocatoin)
+  fileObject.write(",")
+  fileObject.write(str(distanceBetweenRelays))
+  fileObject.write(",")
+  return locationOfRelay
 
 
 with stem.control.Controller.from_port() as controller:
-  controller.authenticate()
+  try:
+    controller.authenticate("wireless")
+  except stem.connection.PasswordAuthFailed:
+    print("Unable to authenticate, password is incorrect")
   geolocator = Nominatim()
   matchSockProxy = geolite2.lookup(sockProxyIp)
   relay_information = controller.get_network_statuses()
@@ -135,57 +160,22 @@ with stem.control.Controller.from_port() as controller:
         f.write(",")
         f.write(str(count))
         f.write(",")
-        f.write(matchOneRelay.country)
-        f.write(",")
-        f.write(matchOneRelay.continent)
-        f.write(",")
-        f.write(matchOneRelay.timezone)
-        f.write(",")
-        f.write(str(matchOneRelay.subdivisions))
-        f.write(",")
-        
-
-        locationOneRelay = geolocator.geocode(matchOneRelay.country)
-        f.write(str(locationOneRelay.latitude))
-        f.write(",")
-        f.write(str(locationOneRelay.longitude))
-        oneRelayTuple = getTupleFromCountry(matchOneRelay.country)
-
-
-        distanceBetweenRelays = calculateDistanceBetweenLocs(distanceBetweenRelays,locationOneRelay,locationMachine)
-        f.write(",")
-        f.write(str(distanceBetweenRelays))
-        f.write(",")
-        f.write(matchMiddleRelay.country)
-
-        f.write(",")
-        f.write(matchMiddleRelay.continent)
-        f.write(",")
-        f.write(matchMiddleRelay.timezone)
-        f.write(",")
-        f.write(str(matchMiddleRelay.subdivisions))
-        f.write(",")
+        locationOneRelay = writeRelayInformation(matchOneRelay,f,locationMachine)                
+        writeGeoInfoToFile(matchMiddleRelay,f)
         locationMiddleRelay = geolocator.geocode(matchMiddleRelay.country)
-        f.write(str(locationMiddleRelay.latitude))
-        f.write(",")
-        f.write(str(locationMiddleRelay.longitude))
+        writeCoordinatesToFile(locationMiddleRelay,f)
         middleRelayTuple = getTupleFromCountry(matchMiddleRelay.country)
         distanceBetweenRelays = calculateDistanceBetweenLocs(distanceBetweenRelays,locationOneRelay,locationMiddleRelay)
         f.write(",")
         f.write(str(distanceBetweenRelays))
         f.write(",")
-        f.write(matchExitRelay.country)
-        f.write(",")
-        f.write(matchExitRelay.continent)
-        f.write(",")
-        f.write(matchExitRelay.timezone)
-        f.write(",")
-        f.write(str(matchExitRelay.subdivisions))
-        f.write(",")
+        
+
+
+
+        writeGeoInfoToFile(matchExitRelay,f)
         locationExitRelay = geolocator.geocode(matchExitRelay.country)
-        f.write(str(locationExitRelay.latitude))
-        f.write(",")
-        f.write(str(locationExitRelay.longitude))
+        writeCoordinatesToFile(locationExitRelay,f)
         
         exitReplayTuple = getTupleFromCountry(matchExitRelay.country)
         distanceBetweenRelays = distanceBetweenRelays + vincenty(locationMiddleRelay, exitReplayTuple).miles
@@ -198,18 +188,10 @@ with stem.control.Controller.from_port() as controller:
         f.write(",")
         f.write(str(sockProxyPort))
         f.write(",")
-        f.write(matchSockProxy.country)
-        f.write(",")
-        f.write(matchSockProxy.continent)
-        f.write(",")
-        f.write(matchSockProxy.timezone)
-        f.write(",")
-        f.write(str(matchSockProxy.subdivisions))
-        f.write(",")
-        f.write(str(locationSockProxy.latitude))
-        f.write(",")
-        f.write(str(locationSockProxy.longitude))
+        writeGeoInfoToFile(matchSockProxy,f)
+        writeCoordinatesToFile(locationSockProxy,f)
+        
 
       print('%s => %0.2f seconds' % (oneRelay.fingerprint, time_taken))
     except Exception as exc:
-      print('Exception => %s' % ( exc))
+      print('Exception here => %s' % ( exc))
