@@ -27,10 +27,10 @@ from geopy.distance import vincenty
 # EXIT_FINGERPRINT = '379FB450010D17078B3766C2273303C358C3A442'
 
 SOCKS_PORT = 9050
-CONNECTION_TIMEOUT = 3000  # timeout before we give up on a circuit
-# sockProxyIp = '103.246.87.147'
-sockProxyIp='127.0.0.1'
-sockProxyPort = 9050
+CONNECTION_TIMEOUT = 90  # timeout before we give up on a circuit
+sockProxyIp = '103.246.87.147'
+# sockProxyIp='127.0.0.1'
+sockProxyPort = 34002
 machineIp = ""
 def query(url):
   """
@@ -97,6 +97,7 @@ def getTupleFromCountry(country):
 def calculateDistanceBetweenLocs(intialDistance, locationIntial, locationFinal):
   finalDistance = intialDistance + vincenty(locationIntial, locationFinal).miles
   return finalDistance
+  
 def writeGeoInfoToFile(geoInformation,fileObject):
   fileObject.write(geoInformation.country)
   fileObject.write(",")

@@ -1,0 +1,12 @@
+Things needed to be in csv File
+
+fingerprint -> IP -> Location -> Coordinates -> Distance
+Time taken
+System current time
+Page size
+
+
+
+https://stem.torproject.org/api/control.html
+https://stem.torproject.org/api/descriptor/router_status_entry.html#stem.descriptor.router_status_entry.RouterStatusEntry
+https://stem.torproject.org/api/control.html#stem.Flag
