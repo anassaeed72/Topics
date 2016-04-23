@@ -4,6 +4,7 @@ import pycurl
 import stem.control
 import sys
 import string
+from geoip import geolite2
 import datrie
 
 def determine(flags):
@@ -39,7 +40,7 @@ with stem.control.Controller.from_port() as controller:
 
 	relay_fingerprints = [desc for desc in controller.get_network_statuses() if determine(desc.flags)]
 
-	print len(relay_fingerprints)
+	# print len(relay_fingerprints)
 
 	entry_guards = [desc for desc in relay_fingerprints if if_guard(desc.flags)]
 
@@ -53,16 +54,49 @@ with stem.control.Controller.from_port() as controller:
 
 	print len(middle_nodes)
 
-	entry_trie = datrie.Trie(string.printable)
+	entry_dict = {}
+	middle_dict = {}
+	exit_dict = {}
+
+	# counter = 0
+	for relay in entry_guards:
+		# print relay.address
+		my_Address = geolite2.lookup(relay.address)
+		# print my_Address.location
+		if my_Address is not None:
+			entry_dict[geolite2.lookup(relay.address).location] = relay.fingerprint
+		# else:
+		# 	counter = counter + 1
+
+	for relay in middle_nodes:
+		# print relay.address
+		my_Address = geolite2.lookup(relay.address)
+		# print my_Address.location
+		if my_Address is not None:
+			middle_dict[geolite2.lookup(relay.address).location] = relay.fingerprint
+
+	for relay in exit_nodes:
+		# print relay.address
+		my_Address = geolite2.lookup(relay.address)
+		# print my_Address.location
+		if my_Address is not None:
+			exit_dict[geolite2.lookup(relay.address).location] = relay.fingerprint
+
+	# print counter
+	# entry_trie = datrie.Trie(string.printable)
+	# middle_trie = datrie.Trie(string.printable)
+	# exit_trie = datrie.Trie(string.printable)
+
+	# insert_in_trie(entry_guards,entry_trie)
+	# insert_in_trie(middle_nodes,middle_trie)
+	# insert_in_trie(exit_nodes,exit_trie)
+
+# Step 3
 	middle_trie = datrie.Trie(string.printable)
-	exit_trie = datrie.Trie(string.printable)
-
-	insert_in_trie(entry_guards,entry_trie)
 	insert_in_trie(middle_nodes,middle_trie)
-	insert_in_trie(exit_nodes,exit_trie)
 
-	# print trie.has_keys_with_prefix(u'123')
-	# if u'1234' in trie:
-	# 	print "True"
-	# else:
-	# 	print "False"
+	temp_exit_nodes = exit_nodes[:5]
+
+	temp_exit_nodes = [desc.address for desc in temp_exit_nodes] # Change it later
+
+	print temp_exit_nodes

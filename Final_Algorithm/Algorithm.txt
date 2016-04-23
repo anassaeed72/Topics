@@ -1,0 +1,32 @@
+https://github.com/sbfcangialosi/ting
+
+
+Creating circuits for the first time:
+1. history will give ip_address // Muneeb - Done
+2. use ip_address to find nearest 5 exit nodes // Done
+3. Use your own_ip to find 5 nearest entry_guards // Done
+4. How to find middle node? // Underwork
+	i. Find a node in middle (Can lead to traffic co-relation attack)
+	ii. Find address which do max 16 bit longest prefix matches. Use those address to as middle node
+5. Simulataneuosly launch ting between selected entry_guards to selected middle_nodes and then from selected middle_nodes to selected exit_nodes
+6. Repeat two more times, take median value
+7. Create 3 circuits // Easy to build
+	best, 2nd best and 3rd best entry -> middle -> exit times
+8. Try to access website using all three, to cater forwarding time aswell
+9. Use the one which gives us fastest page load time.
+10. Store the citcuit for future use.
+
+
+Attaching Streams:
+If you take a look at above algorithm step 1, history will give ip_address. It will give us alot of ip_address
+Using weighted average we take the most used ones and create 5 separate circuits based on them.
+When new request comes, we can quickly match to website's ip and circuits exit ip and find the most suitable circuit and attach its stream to it.
+
+Refreshing Circuits:
+There are few ways:
+	i.  Completely make a circuit from scratch in background when time-slice (10 mins) for each circuit is about to expire. This can 		lead to creation same circuit again.
+	ii. Use the 2nd and 3rd best circuits when we ran the first test. Step 7 of algorithm on top.
+	iii.Only Change the middle node using prefix matching. (Will it open up possible attacks? I am not sure)
+
+Problems to solve:
+Beside some problems mentioned above, we need to be able to combine ting's code with our code. (Atm we can only use from terminal)
