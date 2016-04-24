@@ -38,11 +38,21 @@ def oneTuple(firstRelay,secondRelay):
 	# have to call ting here
 	print "In oneTuple"
 	print "FirstRelay   " + firstRelay + " secondRelay " + secondRelay
+	inputFileName = firstRelay + secondRelay + "input.txt"
+	fo = open(inputFileName,"wb")
+	fo.write(firstRelay+" " + secondRelay)
+	fo.close()
+	outputFileName = firstRelay + secondRelay +"output.txt"
+	fo = open(outputFileName,"wb")
+	fo.close()
+	command = "python ting_client.py -i "+ inputFileName +" -o " +outputFileName +" -m "+firstRelay+secondRelay 
+	print command
 
 def find(inputDictionary):
 	threadID = 1
 	print "In find"
 	queueLock.acquire()
+
 	for word in inputDictionary.keys():
 		workQueue.put(word)
 		workQueue.put(inputDictionary.get(word))

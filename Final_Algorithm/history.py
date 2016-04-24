@@ -111,13 +111,23 @@ def convert_epoch_to_time_passed (history):
 def get_history():
     try:
         firefox_path = get_path('firefox')
+        # print "here 1"
+        # print firefox_path
         chrome_sqlite_path = get_path('chrome')
-        profiles = [i for i in os.listdir(firefox_path) if i.endswith('.default')]
+        # print "here 2"
+        profiles = [i for i in os.listdir(firefox_path) if ('.default') in i]
+        # print profiles
+        # print "here 3"
         sqlite_path = firefox_path+ profiles[0]+'/places.sqlite'
+        # print "here 4"
         if os.path.exists(sqlite_path):
+            # print "here 5"
             firefox_connection = sqlite3.connect(sqlite_path)
+            # print "here 6"
         if os.path.exists(chrome_sqlite_path):
+            # print "here 7"
             chrome_connection = sqlite3.connect(chrome_sqlite_path)
+            # print "here 8"
     except Exception as error:
         print(str(error))
         exit(1)
@@ -126,6 +136,7 @@ def get_history():
     hist = history(cursor, src="firefox")
     hist = parse_history(hist)
     hist = combine_history(hist)
+    # print "hello"
     return hist
 
 # history is of the form, key: hostname, val: (visit_count, visit_date)

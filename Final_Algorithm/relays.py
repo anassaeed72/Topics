@@ -58,17 +58,17 @@ def get_relays(controller):
 
 	for relay in entry_guards:
 		my_Address = geolite2.lookup(relay.address)
-		if my_Address is not None:
+		if my_Address is not None and my_Address.location is not None:
 			entry_dict[my_Address.location] = relay.fingerprint
 
 	for relay in middle_nodes:
 		my_Address = geolite2.lookup(relay.address)
-		if my_Address is not None:
+		if my_Address is not None and my_Address.location is not None:
 			middle_dict[my_Address.location] = relay.fingerprint
 
 	for relay in exit_nodes:
 		my_Address = geolite2.lookup(relay.address)
-		if my_Address is not None:
+		if my_Address is not None and my_Address.location is not None:
 			exit_dict[my_Address.location] = relay.fingerprint
 
 	return (entry_dict,middle_dict,exit_dict)

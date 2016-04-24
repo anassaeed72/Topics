@@ -6,7 +6,9 @@ import pycurl
 import stem.control
 
 SOCKS_PORT = 9050
-CONNECTION_TIMEOUT = 60  # timeout before we give up on a circuit
+CONNECTION_TIMEOUT = 30  # timeout before we give up on a circuit
+fd = open('original_tor.txt', 'w')
+
 
 def query(url):
   """
@@ -24,9 +26,10 @@ def query(url):
   query.setopt(pycurl.WRITEFUNCTION, output.write)
 
   try:
-    # print "Starting Curl Perform"
+    print "Starting Curl Perform"
     query.perform()
-    # print "Curl Finished"
+    print "Curl Finished"
+    # fd.write(output.getvalue())
     return output.getvalue()
   except pycurl.error as exc:
     raise ValueError("Unable to reach %s (%s)" % (url, exc))
@@ -52,7 +55,7 @@ def scan(controller,curCircuit, url):
     start_time = time.time()
     print "Check 1"
     check_page = query(url)
-    # print check_page
+    fd.write(check_page)
     print "Check 2"
     # if 'Congratulations. This browser is configured to use Tor.' not in check_page:
     #   raise ValueError("Request didn't have the right content")
@@ -71,11 +74,12 @@ def scan(controller,curCircuit, url):
 #   all_circuits = controller.get_circuits()
 
 #   for curCircuit in all_circuits:
-#     print curCircuit.path
-#     # sys.exit("Stopping Program")
-#     try:
-#       time_taken = scan(controller,curCircuit, 'http://www.google.com.pk')
-#       print('%0.2f seconds' % (time_taken))
-#     except Exception as exc:
-#       print "im in scan.py"
-#       print "Error occured"
+#     if curCircuit.path > 2:
+#       print curCircuit.path
+#       try:
+#         time_taken = scan(controller,curCircuit, 'https://www.google.com.pk')
+#         print('%0.2f seconds' % (time_taken))
+#         sys.exit('Done once')
+#       except Exception as exc:
+#         print "im in scan.py"
+#         print "Error occured"
