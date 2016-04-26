@@ -2,10 +2,32 @@ import re
 import sys
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
+from urlparse import urlparse
+import urllib2, os
+import operator
+def getBaseURL(urlInput):
+	parsedURL = urlparse(urlInput)
+	domain = '{uri.scheme}://{uri.netloc}/'.format(uri=parsedURL)
+	return domain
+def getURLSize(urlInput):
+	try:
+		f = urllib2.urlopen (urlInput)
+		if "Content-Length" in f.headers:
+			size = int (f.headers["Content-Length"])
+		else:
+			size = 0
+		return size
+	except Exception, e:
+		raise e
+		return 0
 
-def getURLsFromPage(pageContents):
+def findMaxURLs(inputDictionary,n):
+	sortedDictionary = sorted(inputDictionary.items(),key = operator.itemgetter(1))
+	return sortedDictionary[len(sortedDictionary)-n:]
+def getAllURLsFromPage(pageContents):
 	return re.findall(r'(https?://[^\s]+)', pageContents)
-
+def getFetechableURLsFromPage(pageContents):
+	return re.findall(r'(src=\"https?://[^\s]+)', pageContents)
 def  insertURLsInDB(urlList):
 	if len(urlList) == 0:
 		return
@@ -68,4 +90,22 @@ def findTopN(n):
 	for document in cursor:
 		urlList.append(document["_id"])
 	return urlList
-print findAllURLs()
+
+def getTopURLsFromPage(pageContents,n):
+	urlList = getFetechableURLsFromPage(pageContents)
+	dictionary = {}
+	for x in urlList:
+		key = getBaseURL(x)
+		value = 1
+		if dictionary.has_key(key):
+			temp = dictionary.get(key)
+			dictionary[key] = temp+value
+			print "here"
+		else:
+			print dictionary.has_key(key)
+			dictionary[key] = value
+	return findMaxURLs(dictionary,n)
+
+
+dic = {"aa":10,"b":2,"aaa":5,"c":100,"a":1}
+findMaxURLs(dic,2)

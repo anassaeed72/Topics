@@ -7,7 +7,7 @@ import stem.control
 
 SOCKS_PORT = 9050
 CONNECTION_TIMEOUT = 30  # timeout before we give up on a circuit
-fd = open('original_tor.txt', 'w')
+fd = open('test.html', 'w')
 
 
 def query(url):

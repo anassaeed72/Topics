@@ -21,7 +21,7 @@ def main():
     middle = relays[1];
     exit = relays[2];
 
-    history[0] = 'google.com.pk'
+    history[0] = 'yahoo.com'
 
     dest_Address =  geolite2.lookup(socket.gethostbyname(history[0]))
 
