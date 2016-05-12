@@ -27,8 +27,8 @@ def findMaxURLs(inputDictionary,n):
 def getAllURLsFromPage(pageContents):
 	return re.findall(r'(https?://[^\s]+)', pageContents)
 def getFetechableURLsFromPage(pageContents):
-	return re.findall(r'(src=\"https?://[^\s]+)', pageContents)
-def  insertURLsInDB(urlList):
+	return re.findall(r'(src=\"https?://[^\s]+\")', pageContents)
+def insertURLsInDB(urlList):
 	if len(urlList) == 0:
 		return
 	for oneURL in urlList:

@@ -135,9 +135,6 @@ def get_top_visited(history, n):
     return sorted_list[:n]
 
 def get_first(tuple):
-    print tuple
+    # print tuple
     return tuple
 
-k = get_top_visited(get_history(), 5)
-for item in k:
-    print item

@@ -14,10 +14,10 @@ def midpointCalculator(p1,p2):
 	lon3 = lon1 + math.atan2(dy, math.cos(lat1) + dx)
 	lon3d = math.degrees(lon3)
 	if lon3d < -180:
-	    print "oops1", lon3d
+	    # print "oops1", lon3d
 	    lon3d += 360
 	elif lon3d > 180:
-	    print "oops2", lon3d
+	    # print "oops2", lon3d
 	    lon3d -= 360
 	return(math.degrees(lat3), lon3d)
 
